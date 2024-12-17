@@ -4,7 +4,14 @@ const { v4: uuidv4, validate: uuidValidate } = require('uuid'); // Import UUID
 const { Buffer } = require('buffer'); // Import Buffer for base64 conversion
 const app = express();
 const port = 3000;
-const sharp = require('sharp');
+const cloudinary = require('cloudinary').v2;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: 'daaxc0gup', // Replace with your Cloudinary cloud name
+  api_key: '674139976213734', // Replace with your Cloudinary API key
+  api_secret: 'VWxsztK0HHCKZt4yA4pWwipXg6M', // Replace with your Cloudinary API secret
+});
 
 // Middleware to handle larger JSON and URL-encoded payloads
 app.use(express.json({ limit: '10mb' })); // Allow JSON payloads up to 10MB
@@ -20,23 +27,26 @@ const client = new cassandra.Client({
   keyspace: 'user', // Replace with your keyspace
 });
 
-// Helper function to validate base64 string
+// Helper function to validate base64 string or handle URLs
 function validateBase64Image(base64String) {
-  // Regex to check for valid base64 format with the correct data URL scheme for various formats
+  // Check if the string is a Cloudinary URL (or any valid URL)
+  const isValidUrl = /^https?:\/\//.test(base64String);
+  if (isValidUrl) {
+    // If it's a URL, no need to validate base64, return it as-is
+    return base64String;
+  }
+
+  // Otherwise, validate base64 string format (base64 with image prefix)
   const base64Regex = /^data:image\/(jpeg|png|gif|bmp|webp|tiff|svg\+xml);base64,/;
   if (base64Regex.test(base64String)) {
-    // If it has the prefix, remove the prefix part
     return base64String.split(',')[1]; // Return only the base64 data part
   }
 
-  // If the base64 string does not have the prefix, treat it as raw base64
   console.warn("Base64 string does not have a prefix. Attempting raw base64 format.");
-
-  // Check if it's a valid base64 string
   if (/^[A-Za-z0-9+/=]+$/.test(base64String)) {
-    return base64String; // Return raw base64 string
+    return base64String;
   } else {
-    console.error("Invalid base64 format received:", base64String.slice(0, 30)); // Log part of the string for debugging
+    console.error("Invalid base64 format received:", base64String.slice(0, 30));
     throw new Error('Invalid base64 image format');
   }
 }
@@ -111,7 +121,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-
 // Endpoint to Update User Details
 app.put('/api/user/:userId', async (req, res) => {
   try {
@@ -125,31 +134,11 @@ app.put('/api/user/:userId', async (req, res) => {
       relationship, facebook, instagram, github, twitter, profileImage,
     } = req.body;
 
-    let profileImageBuffer = null;
+    let profileImageUrl = null;
 
-    // If a profile image is provided
+    // If a profile image is provided, upload it to Cloudinary or handle URL
     if (profileImage) {
-      try {
-        // Validate and extract base64 image data
-        const validatedImage = validateBase64Image(profileImage);
-        profileImageBuffer = Buffer.from(validatedImage, 'base64'); // Convert base64 to binary buffer
-
-        // Optional: Compress and resize the image using sharp
-        const compressedImageBuffer = await sharp(profileImageBuffer)
-          .resize(500) // Resize the image (optional)
-          .jpeg({ quality: 80 }) // Compress the image to JPEG format
-          .toBuffer(); // Get compressed image as buffer
-
-        // Check image size (max 5MB)
-        if (compressedImageBuffer.length > 5 * 1024 * 1024) {
-          throw new Error('Image size exceeds the 5MB limit');
-        }
-
-        profileImageBuffer = compressedImageBuffer; // Use the compressed image buffer
-      } catch (err) {
-        console.error("Invalid profileImage format:", err.message);
-        return res.status(400).json({ message: 'Invalid profile image format' });
-      }
+      profileImageUrl = validateBase64Image(profileImage); // This will handle both base64 and URL
     }
 
     // Cassandra query to update the user details
@@ -162,20 +151,19 @@ app.put('/api/user/:userId', async (req, res) => {
     `;
     const params = [
       first_name, last_name, email, phone, address, birthday, gender, relationship,
-      facebook, instagram, github, twitter, profileImageBuffer, userId, // Include binary image in the query
+      facebook, instagram, github, twitter, profileImageUrl, userId, // Include the image URL or base64 image in the query
     ];
 
     // Execute the query
     await client.execute(query, params, { prepare: true });
 
     // Respond with success message
-    res.status(200).json({ message: 'User details updated successfully!' });
+    res.status(200).json({ message: 'User details updated successfully!', profileImageUrl });
   } catch (error) {
     console.error('Error updating user details:', error);
     res.status(500).json({ message: 'Failed to update user details', error: error.message });
   }
 });
-
 
 // Endpoint to Fetch User Details
 app.get('/api/user/:userId', async (req, res) => {
