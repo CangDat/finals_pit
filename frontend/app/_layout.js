@@ -7,6 +7,8 @@ const RootLayout = () => {
     return (
         <AuthProvider>
     <Stack>
+        <Stack.Screen name="screens/signupScreen" options={{headerShown: false}}/>
+        <Stack.Screen name="screens/loginScreen" options={{headerShown: false}}/>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
     </Stack>
     <ToastNotification />

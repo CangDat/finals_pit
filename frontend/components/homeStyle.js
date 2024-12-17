@@ -98,7 +98,10 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   socialIcons: {
-    width: "100%",
+    flexDirection:"row",
+    flexWrap: "wrap",
+    justifyContent: "space-evenly",
+    marginVertical:10,
   },
   socialRow: {
     flexDirection: "row",
@@ -107,6 +110,8 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: "center",
+    width: "50%",
+    marginVertical:10,
   },
   socialText: {
     marginTop: 5,
@@ -117,7 +122,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    backgroundColor: "rgba(74, 71, 71, 0.61)", // Semi-transparent background
   },
   modalContainer: {
     width: "80%",
@@ -133,7 +138,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   input: {
     borderWidth: 1,
@@ -154,18 +159,32 @@ const styles = StyleSheet.create({
   
   profileImageContainer: {
     alignItems: "center",
+    justifyContent:"center",
+    position:"relative,",
     marginBottom: 15,
   },
   
   modalProfileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     borderWidth: 2,
     borderColor: "#ccc",
-    marginBottom: -10,
+    resizeMode: "cover",
   },
-  
+
+centeredCameraIcon: {
+  position: "absolute",
+  top: "45%",
+  left: "45%",
+  transform: [{ translateX: -15 }, { translateY: -15 }], // Centers the icon
+  backgroundColor: "rgba(0, 0, 0, 0.6)", // Semi-transparent black background
+  borderRadius: 30,
+  padding: 10,
+  alignItems: "center",
+  justifyContent: "center",
+},
+
   imagePlaceholderText: {
     fontSize: 14,
     color: "black",
@@ -198,23 +217,48 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   pickerContainer: {
-    marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 5,
-    backgroundColor: '#f9f9f9',
+    borderColor: "#ccc",
+    borderRadius: 5,
+    marginBottom: 15,
+    overflow: "hidden",
   },
+  
   picker: {
-    height: 40,
-    width: '100%',
-    color: 'black', // Adjust text color
+    height: 50,
+    width: "100%",
+    backgroundColor: "#f8f8f8",
+    color: "#333",
+  },
+  
+  pickerItem: {
+    height: 10,
     fontSize: 16,
   },
-  pickerItem: {
-    height: 40,
+  dateInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: "#f8f8f8",
+  },
+  saveButton: {
+    backgroundColor: "#27ae60",
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  saveButtonText: {
+    color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
   },
 });
+
 
 export default styles;
