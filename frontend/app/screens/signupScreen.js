@@ -37,7 +37,7 @@ export default function SignupScreen() {
       };
   
       // Send data to the backend
-      const response = await axios.post('http://192.168.1.58:3000/api/users', payload);
+      const response = await axios.post('http://192.168.1.13:3000/api/users', payload);
   
       if (response.status === 200) {
         showSuccessToast(`Account created for ${values.firstName}! 👋`);

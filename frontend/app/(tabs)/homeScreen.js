@@ -22,9 +22,9 @@ import styles from "../../components/homeStyle";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import axios from 'axios';
 import * as FileSystem from "expo-file-system";
 import { Buffer } from 'buffer';
-
 
 
 
@@ -42,6 +42,7 @@ const HomeScreen = () => {
     { label: "Female", value: "female" },
   ];
 
+
   const fetchUserDetails = async () => {
     try {
       const userId = await AsyncStorage.getItem("user_id");
@@ -50,29 +51,27 @@ const HomeScreen = () => {
         return;
       }
       const response = await fetch(
-        `http://192.168.1.58:3000/api/user/${userId}`
+        `http://192.168.1.13:3000/api/user/${userId}`
       );
       const data = await response.json();
       console.log("Fetched User Data:", data);
   
-      // Map the API response to profileDetails state
       setProfileDetails({
         name: `${data.first_name || ""} ${data.last_name || ""}`,
         username: data.username || "N/A",
         email: data.email || "N/A",
-        phone: data.phone_number || "N/A",  // updated key
+        phone: data.phone_number || "N/A",
         address: data.address || "N/A",
-        birthday: data.birthdate || "N/A",  // updated key
+        birthday: data.birthdate || "N/A",
         gender: data.gender || "N/A",
-        relationship: data.relationship_status || "N/A",  // updated key
-        facebook: data.facebook_account || "N/A",  // updated key
-        instagram: data.instagram_account || "N/A",  // updated key
-        github: data.github_account || "N/A",  // updated key
-        twitter: data.twitter_account || "N/A",  // updated key
-        profileImage: data.profile_picture || null,  // updated key
+        relationship: data.relationship_status || "N/A",
+        facebook: data.facebook_account || "N/A",
+        instagram: data.instagram_account || "N/A",
+        github: data.github_account || "N/A",
+        twitter: data.twitter_account || "N/A",
+        profileImage: data.profile_picture || null,
       });
   
-      // Set the birthday as a date object
       if (data.birthdate) {
         setSelectedDate(new Date(data.birthdate));
       }
@@ -84,6 +83,7 @@ const HomeScreen = () => {
   };
   
 
+  
   useEffect(() => {
     fetchUserDetails();
   }, []);
@@ -111,26 +111,46 @@ const HomeScreen = () => {
       const imageUri = result.assets[0].uri;
       const fileType = result.assets[0].uri.split('.').pop();  // Extract file extension (e.g., jpg, png)
   
-      // Convert the image to Base64 string
-      const base64Image = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      // Upload image to Cloudinary
+      const uploadedImageUrl = await uploadImageToCloudinary(imageUri);
   
-      // Ensure the base64 string is correctly formatted
-      const base64ImageString = `data:image/${fileType};base64,${base64Image}`;
-  
-      // Store the base64 formatted string as the profile image
+      // Set the image URL in the profile details
       setProfileDetails((prev) => ({
         ...prev,
-        profileImage: base64ImageString, // Store the base64 string in state
+        profileImage: uploadedImageUrl, // Use the Cloudinary URL
       }));
     } catch (error) {
       console.error("Error in handleImagePick:", error);
       Alert.alert("Error", "An error occurred while selecting an image.");
     }
   };
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: imageUri,
+        type: "image/jpeg", // Make sure to match the image MIME type
+        name: "profile.jpg", // or any relevant name
+      });
+      formData.append("upload_preset", "image_upload"); // Replace with your Cloudinary preset
   
+      const response = await fetch("https://api.cloudinary.com/v1_1/daaxc0gup/image/upload", {
+        method: "POST",
+        body: formData,
+      });
   
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;  // Return the Cloudinary image URL
+      } else {
+        Alert.alert("Error", "Failed to upload image.");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "An error occurred while uploading the image.");
+    }
+  };
   
 
   const handleEditProfile = () => {
@@ -155,7 +175,6 @@ const HomeScreen = () => {
         return;
       }
   
-      // Use the binary image data from the state
       const updatedData = {
         first_name: profileDetails.name.split(" ")[0] || "",
         last_name: profileDetails.name.split(" ")[1] || "",
@@ -169,10 +188,10 @@ const HomeScreen = () => {
         instagram: profileDetails.instagram,
         github: profileDetails.github,
         twitter: profileDetails.twitter,
-        profileImage: profileDetails.profileImage,  // Send the binary data for the image
+        profileImage: profileDetails.profileImage,  // Send the image URL
       };
   
-      const response = await fetch(`http://192.168.1.58:3000/api/user/${userId}`, {
+      const response = await fetch(`http://192.168.1.13:3000/api/user/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -195,8 +214,6 @@ const HomeScreen = () => {
     }
   };
   
-  
-
   const handleDateChange = (event, date) => {
     if (date) {
       setSelectedDate(date);
@@ -261,18 +278,12 @@ const HomeScreen = () => {
         style={[styles.profileContainer, { marginHorizontal: width > 768 ? "20%" : 0 }]}
       >
         {profileDetails.profileImage ? (
-          profileDetails.profileImage.startsWith("data:image") ? (
             <Image
               source={{ uri: profileDetails.profileImage }}
               style={[styles.profileImage, { width: width > 768 ? 160 : 120, height: width > 768 ? 160 : 120, borderRadius: 0 }]}
             />
+          
           ) : (
-            <Image
-              source={{ uri: `http://192.168.1.58:3000/${profileDetails.profileImage}` }}
-              style={[styles.profileImage, { width: width > 768 ? 160 : 120, height: width > 768 ? 160 : 120, borderRadius: 0 }]}
-            />
-          )
-        ) : (
           <Ionicons
             name="person-circle"
             size={width > 768 ? 160 : 120}
