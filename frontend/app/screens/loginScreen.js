@@ -8,6 +8,8 @@ import { AuthContext } from '../../components/useContext.js'; // Import AuthCont
 import { showSuccessToast, showErrorToast } from '../../components/toast.js';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL from '../../components/url.js';
+
 
 
 const backgroundImage = {
@@ -31,7 +33,7 @@ export default function LoginScreen() {
 
   const handleLogin = async (values) => {
     try {
-      const response = await fetch('http://192.168.1.13:3000/api/login', {
+      const response = await fetch(`${BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

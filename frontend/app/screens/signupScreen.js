@@ -8,6 +8,8 @@ import { showSuccessToast, showErrorToast } from '../../components/toast.js';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../../components/useContext';
 import axios from 'axios';
+import BASE_URL from '../../components/url.js';
+
 
 const backgroundImage = { 
   uri: 'https://images.unsplash.com/photo-1530569673472-307dc017a82d?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' 
@@ -37,7 +39,7 @@ export default function SignupScreen() {
       };
   
       // Send data to the backend
-      const response = await axios.post('http://192.168.1.13:3000/api/users', payload);
+      const response = await axios.post(`${BASE_URL}/api/users`, payload);
   
       if (response.status === 200) {
         showSuccessToast(`Account created for ${values.firstName}! 👋`);

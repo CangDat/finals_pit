@@ -1,54 +1,22 @@
-import { Text, View, StyleSheet } from 'react-native';
-import React, {useState, useEffect, useSyncExternalStore} from 'react';
+// app/(tabs)/AboutUs.js
+import React from 'react';
+import { View, Text, ImageBackground} from 'react-native';
+import styles from '../../components/homeStyle';
 
-export default function AboutScreen() {
-  const [backendData, setBackendData] = useState([{}])
+const backgroundImage = { uri: 'https://images.unsplash.com/photo-1530569673472-307dc017a82d?q=80&w=1888&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' };
 
-  useEffect(() =>{
-    fetch("/api").then(
-      response => response.json()
-    ).then(
-      data =>{
-        setBackendData(data)
-      }
-    )
-  }, [])
- 
- 
- 
- 
- 
+const AboutUs = () => {
   return (
+   
     <View style={styles.container}>
-      {(typeof backendData.users === 'undefined') ? (
-        <p>Loading ...</p>
-      ):(
-        backendData.users.map((user, i)=>(
-          <p key={i}>{user}</p>
-        ))
-      )}
+      <View style={styles.profileContainer}>
 
-      <Text style={styles.text}>About Us</Text>
-      <Text style={styles.description}>
-        This is a simple application to demonstrate tab navigation.
-      </Text>
+      <Text style={styles.name}>About Us</Text>
+      <Text style={styles.name}>This is the About Us page!</Text>
+      </View>
     </View>
-  );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  text: {
-    fontSize: 24,
-  },
-  description: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-});
+  );
+};
+
+export default AboutUs;
