@@ -59,12 +59,12 @@ export const globalStyles = StyleSheet.create({
     fontSize: 36,
     marginBottom: 24,
     fontWeight: "500",
-    color: "#045076",
+    color: "#ffffff",
     textAlign: "center",
   },
   button: {
     width: "80%",
-    backgroundColor: "navy",
+    backgroundColor: "#007814",
     padding: 10, // Increased padding for better touch area
     borderRadius: 5,
     justifyContent: "center",
