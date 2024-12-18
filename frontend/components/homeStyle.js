@@ -123,17 +123,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(74, 71, 71, 0.61)", // Semi-transparent background
+    padding:10,
   },
   modalContainer: {
     width: "80%",
     backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 20,
+    padding:20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    marginBottom: 5,
+    marginTop: 5,
+    flex: 1,
+
   },
   modalTitle: {
     fontSize: 18,
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 4,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 15,
     width: "100%",
   },
   imageOverlay: {
@@ -247,17 +252,33 @@ centeredCameraIcon: {
     backgroundColor: "#f8f8f8",
   },
   saveButton: {
-    backgroundColor: "#27ae60",
+    backgroundColor: "black",
     paddingVertical: 10,
-    borderRadius: 5,
+    paddingHorizontal: 14,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 10,
+    width: '100%',
+    marginBottom: 20
   },
   saveButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
+  closeButton: {
+    position: "absolute",
+    top: 20, // Adjust to place it at the top-right corner
+    right:55, // Adjust to align it with the right edge
+    padding: 10,
+    zIndex: 100, // Ensure it's above all other components
+  },
+  closeButtonText: {
+    color: "blaxk",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  
 });
 
 

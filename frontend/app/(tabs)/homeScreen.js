@@ -1,34 +1,20 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  Modal,
-  TextInput,
-  Button,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native";
-import {
-  Ionicons,
-  FontAwesome,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import React, { useState, useEffect, useContext } from "react";
+import {View, Text, Image, TouchableOpacity, ScrollView, Alert, Modal, TextInput, useWindowDimensions, ActivityIndicator} from "react-native";
+import {Ionicons, FontAwesome, MaterialCommunityIcons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import styles from "../../components/homeStyle";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import axios from 'axios';
-import * as FileSystem from "expo-file-system";
-import { Buffer } from 'buffer';
+import BASE_URL from "../../components/url";
+import {useRouter} from 'expo-router';
+import { AuthContext } from "../../components/useContext";
 
 
 
 const HomeScreen = () => {
+  const {logout} = useContext(AuthContext);
+  const router=useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const { width } = useWindowDimensions();
@@ -51,7 +37,7 @@ const HomeScreen = () => {
         return;
       }
       const response = await fetch(
-        `http://192.168.1.13:3000/api/user/${userId}`
+        `${BASE_URL}/api/user/${userId}`
       );
       const data = await response.json();
       console.log("Fetched User Data:", data);
@@ -191,7 +177,7 @@ const HomeScreen = () => {
         profileImage: profileDetails.profileImage,  // Send the image URL
       };
   
-      const response = await fetch(`http://192.168.1.13:3000/api/user/${userId}`, {
+      const response = await fetch(`${BASE_URL}/api/user/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -214,6 +200,38 @@ const HomeScreen = () => {
     }
   };
   
+
+  const handleLogout = async () => {
+
+    Alert.alert(
+      "Are you sure?",
+      "Do you really want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('user_id');
+              await AsyncStorage.removeItem('user_token');
+              await logout(); 
+  
+              router.push('/screens/loginScreen'); 
+            } catch (error) {
+              console.error("Error logging out:", error);
+              Alert.alert("Error", "An error occurred during logout.");
+            }
+          },
+        },
+      ],
+      { cancelable: false } 
+    );
+  };
+
+
   const handleDateChange = (event, date) => {
     if (date) {
       setSelectedDate(date);
@@ -265,7 +283,7 @@ const HomeScreen = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.dropdownItem}
-              onPress={() => Alert.alert("Logout", "You have been logged out!")}
+              onPress={handleLogout}
             >
               <Text style={styles.dropdownText}>Logout</Text>
             </TouchableOpacity>
@@ -339,108 +357,129 @@ const HomeScreen = () => {
 
       {/* Edit Profile Modal */}
       <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowModal(false)}
+  visible={showModal}
+  transparent={true}
+  animationType="slide"
+  onRequestClose={() => setShowModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    {/* Close Button */}
+    <TouchableOpacity
+      style={styles.closeButton}
+      onPress={() => setShowModal(false)}
+    >
+      <Text style={styles.closeButtonText}>X</Text>
+    </TouchableOpacity>
+
+    {/* Modal Content - Scrollable */}
+
+      <ScrollView
+        style={styles.modalContainer}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
-        <View style={styles.modalOverlay}>
-          <ScrollView style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
+        <Text style={styles.modalTitle}>Edit Profile</Text>
 
-            {/* Profile Picture Edit */}
-            <View style={styles.profileImageContainer}>
-              {profileDetails.profileImage ? (
-                <Image
-                  source={{ uri: profileDetails.profileImage }}
-                  style={styles.modalProfileImage}
-                />
-              ) : (
-                <Ionicons name="person-circle" size={120} color="black" />
-              )}
+        {/* Profile Picture Edit */}
+        <View style={styles.profileImageContainer}>
+          {profileDetails.profileImage ? (
+            <Image
+              source={{ uri: profileDetails.profileImage }}
+              style={styles.modalProfileImage}
+            />
+          ) : (
+            <Ionicons name="person-circle" size={120} color="black" />
+          )}
 
-              <TouchableOpacity
-                style={styles.centeredCameraIcon}
-                onPress={handleImagePick}
-              >
-                <FontAwesome name="camera" size={30} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Input Fields */}
-            {["name", "email", "phone", "address"].map((field) => (
-              <View key={field}>
-                <Text style={styles.label}>{field.charAt(0).toUpperCase() + field.slice(1)}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={profileDetails[field]}
-                  onChangeText={(text) =>
-                    setProfileDetails((prev) => ({ ...prev, [field]: text }))
-                  }
-                  placeholder={field}
-                />
-              </View>
-            ))}
-
-            {/* Birthday Input */}
-            <View key="birthday">
-              <Text style={styles.label}>Birthday</Text>
-              <TouchableOpacity onPress={handleBirthdayInputPress}>
-                <TextInput
-                  style={styles.input}
-                  value={selectedDate.toLocaleDateString()}
-                  placeholder="Select Birthday"
-                  editable={false}
-                />
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={selectedDate}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                  style={{ width: "100%" }}
-                />
-              )}
-            </View>
-
-            {/* Gender Picker */}
-            <View key="gender" style={[styles.pickerContainer, { borderWidth: 1, borderColor: "#ccc" }]}>
-              <Text style={styles.label}>Gender</Text>
-              <Picker
-                selectedValue={profileDetails.gender}
-                onValueChange={(itemValue) =>
-                  setProfileDetails((prev) => ({ ...prev, gender: itemValue }))
-                }
-                style={styles.picker}
-              >
-                <Picker.Item label="Select Gender" value="" />
-                {genders.map((gender) => (
-                  <Picker.Item key={gender.value} label={gender.label} value={gender.value} />
-                ))}
-              </Picker>
-            </View>
-
-            {/* Remaining Social Media Fields */}
-            {["relationship", "facebook", "instagram", "github", "twitter"].map((field) => (
-              <View key={field}>
-                <Text style={styles.label}>{field.charAt(0).toUpperCase() + field.slice(1)}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={profileDetails[field]}
-                  onChangeText={(text) =>
-                    setProfileDetails((prev) => ({ ...prev, [field]: text }))
-                  }
-                  placeholder={field}
-                />
-              </View>
-            ))}
-
-            {/* Save Button */}
-            <Button title="Save Changes" onPress={handleSave} />
-          </ScrollView>
+          <TouchableOpacity
+            style={styles.centeredCameraIcon}
+            onPress={handleImagePick}
+          >
+            <FontAwesome name="camera" size={30} color="white" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        {/* Input Fields */}
+        {["name", "email", "phone", "address"].map((field) => (
+          <View key={field}>
+            <Text style={styles.label}>
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails[field]}
+              onChangeText={(text) =>
+                setProfileDetails((prev) => ({ ...prev, [field]: text }))
+              }
+              placeholder={field}
+            />
+          </View>
+        ))}
+
+        {/* Birthday Input */}
+        <View key="birthday">
+          <Text style={styles.label}>Birthday</Text>
+          <TouchableOpacity onPress={handleBirthdayInputPress}>
+            <TextInput
+              style={styles.input}
+              value={selectedDate.toLocaleDateString()}
+              placeholder="Select Birthday"
+              editable={false}
+            />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+              style={{ width: "100%" }}
+            />
+          )}
+        </View>
+
+        {/* Gender Picker */}
+        <View key="gender" style={styles.pickerContainer}>
+          <Text style={styles.label}>Gender</Text>
+          <Picker
+            selectedValue={profileDetails.gender}
+            onValueChange={(itemValue) =>
+              setProfileDetails((prev) => ({ ...prev, gender: itemValue }))
+            }
+            style={styles.picker}
+          >
+            <Picker.Item label="Select Gender" value="" />
+            {genders.map((gender) => (
+              <Picker.Item key={gender.value} label={gender.label} value={gender.value} />
+            ))}
+          </Picker>
+        </View>
+
+        {/* Remaining Social Media Fields */}
+        {["relationship", "facebook", "instagram", "github", "twitter"].map((field) => (
+          <View key={field}>
+            <Text style={styles.label}>
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={profileDetails[field]}
+              onChangeText={(text) =>
+                setProfileDetails((prev) => ({ ...prev, [field]: text }))
+              }
+              placeholder={field}
+            />
+          </View>
+        ))}
+
+        {/* Save Button */}
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>Save Changes</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+
+</Modal>
+
     </ScrollView>
   );
 };
